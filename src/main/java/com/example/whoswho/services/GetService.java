@@ -1,6 +1,7 @@
 package com.example.whoswho.services;
 
 import com.example.whoswho.Utils;
+import com.example.whoswho.models.UserProfileInfo;
 import com.example.whoswho.response.ChannelDto;
 import com.example.whoswho.slackResponseDto.Conversations;
 import com.example.whoswho.slackResponseDto.SlackChannelDto;
@@ -28,7 +29,7 @@ public class GetService {
 
   static String publicChannel = "https://slack.com/api/conversations.list?limit=1000&pretty=1&exclude_archived=true";
   static String privateChannel = "https://slack.com/api/conversations.list?limit=1000&types=private_channel&pretty=1&exclude_archived=true";
-  static String channelMembers = "";
+  static String channelMembers = "https://slack.com/api/conversations.members?pretty=1&channel=";
   static String getMember = "";
 
   public List<ChannelDto> getAll() {
@@ -39,6 +40,7 @@ public class GetService {
       .collect(Collectors.toList());
     List<ChannelDto> projectChannelList = channelDtoList.stream().filter(c -> c.getName().matches("(.*)project(.*)"))
       .collect(Collectors.toList());
+    teamChannelList.stream().forEach(t -> t.setMembers(getMemeberOfChannel(t.getId())));
     return teamChannelList;
   }
 
@@ -90,5 +92,18 @@ public class GetService {
     channelDto.setId(slackChannelDto.getId());
     channelDto.setDesc(slackChannelDto.getTopic().get("value"));
     return channelDto;
+  }
+
+  private List<UserProfileInfo> getMemeberOfChannel(String channelId) {
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("Authorization", "Bearer " + utils.getToken());
+    HttpEntity entity = new HttpEntity(headers);
+    Object arrayList =  restTemplate.exchange(channelMembers + channelId,
+      HttpMethod.GET, entity, ConcurrentMap.class).getBody().get("members");
+
+    GsonBuilder gsonBuilder = new GsonBuilder();
+    Gson gson = gsonBuilder.create();
+    List<UserProfileInfo> userProfileInfoList = new ArrayList<>();
+    return new Gson().fromJson(gson.toJson(arrayList), List.class);
   }
 }
