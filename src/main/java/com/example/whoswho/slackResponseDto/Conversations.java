@@ -1,4 +1,4 @@
-package com.example.whoswho.models;
+package com.example.whoswho.slackResponseDto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -7,13 +7,13 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Conversations {
 
-  private List<Channels> channels;
+  private List<SlackChannelDto> channels;
 
-  public List<Channels> getChannels() {
+  public List<SlackChannelDto> getChannels() {
     return channels;
   }
 
-  public void setChannels(List<Channels> channels) {
+  public void setChannels(List<SlackChannelDto> channels) {
     this.channels = channels;
   }
 }
