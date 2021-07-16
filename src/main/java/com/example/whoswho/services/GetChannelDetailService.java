@@ -3,6 +3,7 @@ package com.example.whoswho.services;
 import com.example.whoswho.Utils;
 import com.example.whoswho.models.UserProfileInfo;
 import com.example.whoswho.response.ChannelDto;
+import com.example.whoswho.response.GetAllDto;
 import com.example.whoswho.slackResponseDto.Conversations;
 import com.example.whoswho.slackResponseDto.SlackChannelDto;
 import com.google.gson.Gson;
@@ -11,17 +12,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Service
-public class GetService {
+public class GetChannelDetailService {
 
+  @Autowired
+  UserProfileInfoService userProfileInfoService;
   @Autowired
   RestTemplate restTemplate;
   @Autowired
@@ -30,9 +36,8 @@ public class GetService {
   static String publicChannel = "https://slack.com/api/conversations.list?limit=1000&pretty=1&exclude_archived=true";
   static String privateChannel = "https://slack.com/api/conversations.list?limit=1000&types=private_channel&pretty=1&exclude_archived=true";
   static String channelMembers = "https://slack.com/api/conversations.members?pretty=1&channel=";
-  static String getMember = "";
 
-  public List<ChannelDto> getAll() {
+  public GetAllDto getAll() {
     List<ChannelDto> channelDtoList = getListOfChannels();
     List<ChannelDto> teamChannelList = channelDtoList.stream().filter(c -> c.getName().matches("(.*)team(.*)"))
       .collect(Collectors.toList());
@@ -40,8 +45,21 @@ public class GetService {
       .collect(Collectors.toList());
     List<ChannelDto> projectChannelList = channelDtoList.stream().filter(c -> c.getName().matches("(.*)project(.*)"))
       .collect(Collectors.toList());
-    teamChannelList.stream().forEach(t -> t.setMembers(getMemeberOfChannel(t.getId())));
-    return teamChannelList;
+
+    CompletableFuture<List> teams = getTeamUsers(teamChannelList);
+    CompletableFuture<List> dept = getDeptUsers(deptChannelList);
+    CompletableFuture<List> projects = getProjectUsers(projectChannelList);
+//    teamChannelList.stream().forEach(t -> t.setMembers(getMemeberOfChannel(t.getId())));
+    System.out.println(System.currentTimeMillis());
+    GetAllDto getAllDto = new GetAllDto();
+    try {
+      getAllDto.setTeams(teams.get());
+      getAllDto.setDept(dept.get());
+      getAllDto.setProjects(projects.get());
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+    }
+    return getAllDto;
   }
 
   private List<ChannelDto> getListOfChannels() {
@@ -58,7 +76,6 @@ public class GetService {
 
     List<ChannelDto> channelDtoList = new ArrayList<>();
     conversations.getChannels().forEach(c -> channelDtoList.add(getChannelDto(c)));
-
     return channelDtoList;
   }
 
@@ -94,16 +111,48 @@ public class GetService {
     return channelDto;
   }
 
-  private List<UserProfileInfo> getMemeberOfChannel(String channelId) {
-    HttpHeaders headers = new HttpHeaders();
-    headers.set("Authorization", "Bearer " + utils.getToken());
-    HttpEntity entity = new HttpEntity(headers);
-    Object arrayList =  restTemplate.exchange(channelMembers + channelId,
-      HttpMethod.GET, entity, ConcurrentMap.class).getBody().get("members");
+  private List<UserProfileInfo> getMemberOfChannel(String channelId) {
+      HttpHeaders headers = new HttpHeaders();
+      headers.set("Authorization", "Bearer " + utils.getToken());
+      HttpEntity entity = new HttpEntity(headers);
+      Object arrayList = restTemplate.exchange(channelMembers + channelId,
+        HttpMethod.GET, entity, ConcurrentMap.class).getBody().get("members");
 
-    GsonBuilder gsonBuilder = new GsonBuilder();
-    Gson gson = gsonBuilder.create();
-    List<UserProfileInfo> userProfileInfoList = new ArrayList<>();
-    return new Gson().fromJson(gson.toJson(arrayList), List.class);
+      GsonBuilder gsonBuilder = new GsonBuilder();
+      Gson gson = gsonBuilder.create();
+
+      List memberIdList = new Gson().fromJson(gson.toJson(arrayList), List.class);
+
+      List<UserProfileInfo> userProfileInfoList = new ArrayList<>();
+      memberIdList.forEach(m -> userProfileInfoList.add(userProfileInfoService.getUserProfileInfo(m.toString())));
+
+      return userProfileInfoList;
+  }
+
+  @Async
+  private CompletableFuture<List> getTeamUsers(List<ChannelDto> teamChannelList) {
+    System.out.println("in here");
+    return CompletableFuture.supplyAsync(() -> {
+      teamChannelList.forEach(t -> t.setMembers(getMemberOfChannel(t.getId())));
+      return teamChannelList;
+    });
+  }
+
+  @Async
+  private CompletableFuture<List> getProjectUsers(List<ChannelDto> projectChannelList) {
+    System.out.println("in here");
+    return CompletableFuture.supplyAsync(() -> {
+      projectChannelList.forEach(t -> t.setMembers(getMemberOfChannel(t.getId())));
+      return projectChannelList;
+    });
+  }
+
+  @Async
+  private CompletableFuture<List> getDeptUsers(List<ChannelDto> deptChannelList) {
+    System.out.println("in here");
+    return CompletableFuture.supplyAsync(() -> {
+      deptChannelList.forEach(t -> t.setMembers(getMemberOfChannel(t.getId())));
+      return deptChannelList;
+    });
   }
 }

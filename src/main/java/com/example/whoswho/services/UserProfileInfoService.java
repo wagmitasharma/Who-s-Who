@@ -11,37 +11,28 @@ import com.slack.api.util.http.listener.ResponsePrettyPrintingListener;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-
 
 @Service
 public class UserProfileInfoService {
 
   @Autowired
-  RestTemplate restTemplate;
-  @Autowired
   Utils utils;
 
-  static String userId = "UEE5V9B4M";
+  public UserProfileInfo getUserProfileInfo(String userId) {
 
-  public UserProfileInfo getUserProfileInfo() {
-
-    User.Profile userProfile = getUserProfileJsonString() ;
+    User.Profile userProfile = getUserProfileJsonString(userId) ;
     UserProfileInfo userProfileInfo = new UserProfileInfo();
     userProfileInfo.setId(userId);
     userProfileInfo.setName(userProfile.getRealName());
     userProfileInfo.setEmail(userProfile.getEmail());
     userProfileInfo.setPhone(userProfile.getPhone());
-    userProfileInfo.setImage(userProfile.getImageOriginal());
-
+    userProfileInfo.setImage(userProfile.getImage192());
     return userProfileInfo;
   }
 
-  private User.Profile getUserProfileJsonString() {
-
-
+  private User.Profile getUserProfileJsonString(String userId) {
 
     SlackConfig config = new SlackConfig();
     config.getHttpClientResponseHandlers().add(new ResponsePrettyPrintingListener());
