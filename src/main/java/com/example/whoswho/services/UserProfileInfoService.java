@@ -2,6 +2,10 @@ package com.example.whoswho.services;
 
 import com.example.whoswho.Utils;
 import com.example.whoswho.models.UserProfileInfo;
+import com.example.whoswho.response.ChannelDto;
+import com.example.whoswho.response.UserDetailDto;
+import com.example.whoswho.slackResponseDto.Conversations;
+import com.example.whoswho.slackResponseDto.SlackChannelDto;
 import com.slack.api.Slack;
 import com.slack.api.SlackConfig;
 import com.slack.api.methods.SlackApiException;
@@ -13,14 +17,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserProfileInfoService {
 
   @Autowired
   Utils utils;
+  @Autowired
+  GetChannelDetailService getChannelDetailService;
+  @Autowired
+  UserGetConversations userGetConversations;
 
-  public UserProfileInfo getUserProfileInfo(String userId) {
+  public Object getUserProfileInfo(String userId, boolean isTeamMember) {
 
     User.Profile userProfile = getUserProfileJsonString(userId) ;
     UserProfileInfo userProfileInfo = new UserProfileInfo();
@@ -29,6 +40,21 @@ public class UserProfileInfoService {
     userProfileInfo.setEmail(userProfile.getEmail());
     userProfileInfo.setPhone(userProfile.getPhone());
     userProfileInfo.setImage(userProfile.getImage192());
+    UserDetailDto userDetailDto =  new UserDetailDto();
+    userDetailDto.setUser(userProfileInfo);
+    if (!isTeamMember){
+      Conversations conversations =  new UserGetConversations().getAllUserConversations(userId, utils.getToken());
+
+      userDetailDto.setProjects(conversations.getChannels().stream().filter(c -> c.getName().matches("(.*)project(.*)"))
+        .collect(Collectors.toList()));
+      userDetailDto.setDept(conversations.getChannels().stream().filter(c -> c.getName().matches("(.*)dept(.*)"))
+        .collect(Collectors.toList()));
+      List<SlackChannelDto> userTeam = conversations.getChannels().stream().filter(c -> c.getName().matches("(.*)team(.*)"))
+        .collect(Collectors.toList());
+      userDetailDto.setTeamMembers(getChannelDetailService.getMemberOfChannel(userTeam.get(0).getId()));
+      userDetailDto.getTeamMembers().removeIf(t -> t.getId().equals(userId));
+      return userDetailDto;
+    }
     return userProfileInfo;
   }
 
@@ -52,6 +78,4 @@ public class UserProfileInfoService {
 
     return result.getProfile();
   }
-
-
 }

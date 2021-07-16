@@ -2,7 +2,8 @@ package com.example.whoswho.services;
 
 
 import com.example.whoswho.models.Channels;
-import com.example.whoswho.models.Conversations;
+import com.example.whoswho.slackResponseDto.Conversations;
+import com.example.whoswho.slackResponseDto.SlackChannelDto;
 import com.slack.api.Slack;
 import com.slack.api.SlackConfig;
 import com.slack.api.methods.SlackApiException;
@@ -33,10 +34,10 @@ public class UserGetConversations {
 
         Conversations conversations = new Conversations();
         List<Conversation> userConversation = getUserConversations(userId, token);
-        List<Channels> channels = new ArrayList<>();
+        List<SlackChannelDto> channels = new ArrayList<>();
 
         userConversation.stream().forEach(c -> {
-            Channels channel = new Channels();
+            SlackChannelDto channel = new SlackChannelDto();
             channel.setId(c.getId());
             channel.setDesc(c.getTopic().getValue());
             channel.setName(c.getName());

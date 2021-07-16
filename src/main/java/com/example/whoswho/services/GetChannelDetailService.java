@@ -50,7 +50,6 @@ public class GetChannelDetailService {
     CompletableFuture<List> dept = getDeptUsers(deptChannelList);
     CompletableFuture<List> projects = getProjectUsers(projectChannelList);
 //    teamChannelList.stream().forEach(t -> t.setMembers(getMemeberOfChannel(t.getId())));
-    System.out.println(System.currentTimeMillis());
     GetAllDto getAllDto = new GetAllDto();
     try {
       getAllDto.setTeams(teams.get());
@@ -111,7 +110,7 @@ public class GetChannelDetailService {
     return channelDto;
   }
 
-  private List<UserProfileInfo> getMemberOfChannel(String channelId) {
+  public List<UserProfileInfo> getMemberOfChannel(String channelId) {
       HttpHeaders headers = new HttpHeaders();
       headers.set("Authorization", "Bearer " + utils.getToken());
       HttpEntity entity = new HttpEntity(headers);
@@ -124,14 +123,13 @@ public class GetChannelDetailService {
       List memberIdList = new Gson().fromJson(gson.toJson(arrayList), List.class);
 
       List<UserProfileInfo> userProfileInfoList = new ArrayList<>();
-      memberIdList.forEach(m -> userProfileInfoList.add(userProfileInfoService.getUserProfileInfo(m.toString())));
+      memberIdList.forEach(m -> userProfileInfoList.add((UserProfileInfo) userProfileInfoService.getUserProfileInfo(m.toString(), true)));
 
       return userProfileInfoList;
   }
 
   @Async
   private CompletableFuture<List> getTeamUsers(List<ChannelDto> teamChannelList) {
-    System.out.println("in here");
     return CompletableFuture.supplyAsync(() -> {
       teamChannelList.forEach(t -> t.setMembers(getMemberOfChannel(t.getId())));
       return teamChannelList;
@@ -140,7 +138,6 @@ public class GetChannelDetailService {
 
   @Async
   private CompletableFuture<List> getProjectUsers(List<ChannelDto> projectChannelList) {
-    System.out.println("in here");
     return CompletableFuture.supplyAsync(() -> {
       projectChannelList.forEach(t -> t.setMembers(getMemberOfChannel(t.getId())));
       return projectChannelList;
@@ -149,8 +146,7 @@ public class GetChannelDetailService {
 
   @Async
   private CompletableFuture<List> getDeptUsers(List<ChannelDto> deptChannelList) {
-    System.out.println("in here");
-    return CompletableFuture.supplyAsync(() -> {
+     return CompletableFuture.supplyAsync(() -> {
       deptChannelList.forEach(t -> t.setMembers(getMemberOfChannel(t.getId())));
       return deptChannelList;
     });

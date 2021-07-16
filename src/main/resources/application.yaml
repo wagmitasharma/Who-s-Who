@@ -7,4 +7,4 @@ server:
   servlet:
     contextPath: /whoswho
 
-token: ${TOKEN:xoxb-458414646086-2264846373319-yK5NotTvGN8S2yb9HA8vdIEL}
+token: ${TOKEN:""}

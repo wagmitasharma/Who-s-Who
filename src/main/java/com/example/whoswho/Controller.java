@@ -22,13 +22,12 @@ public class Controller {
 
   @GetMapping("/getAll")
   public ResponseEntity<Object> getAll() {
-    System.out.println(System.currentTimeMillis());
     return new ResponseEntity<>(getService.getAll(), HttpStatus.ACCEPTED);
   }
 
   @GetMapping("/getUserProfile")
   public ResponseEntity<Object> getUserProfile(@RequestParam String userId) {
-    return new ResponseEntity<>(userProfileInfoService.getUserProfileInfo(userId), HttpStatus.ACCEPTED);
+    return new ResponseEntity<>(userProfileInfoService.getUserProfileInfo(userId, false), HttpStatus.ACCEPTED);
   }
 
   @GetMapping("/healthCheck")
