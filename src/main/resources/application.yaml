@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: whoswho
+
+server:
+  port: 8080
+  servlet:
+    contextPath: /whoswho
+
+token: ${TOKEN:""}
