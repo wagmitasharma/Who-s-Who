@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,19 +41,26 @@ public class UserProfileInfoService {
     userProfileInfo.setEmail(userProfile.getEmail());
     userProfileInfo.setPhone(userProfile.getPhone());
     userProfileInfo.setImage(userProfile.getImage192());
+    userProfileInfo.setImageHd(userProfile.getImage1024());
+    if (userProfileInfo.getImageHd()==null)
+      userProfileInfo.setImageHd(userProfileInfo.getImage());
     UserDetailDto userDetailDto =  new UserDetailDto();
     userDetailDto.setUser(userProfileInfo);
     if (!isTeamMember){
       Conversations conversations =  new UserGetConversations().getAllUserConversations(userId, utils.getToken());
 
-      userDetailDto.setProjects(conversations.getChannels().stream().filter(c -> c.getName().matches("(.*)project(.*)"))
+      userDetailDto.setProjects(conversations.getChannels().stream().filter(c -> c.getName().matches("(.*)project(.*)" +
+        "|(.*)rakbank(.*)|(.*)falcon(.*)"))
         .collect(Collectors.toList()));
-      userDetailDto.setDept(conversations.getChannels().stream().filter(c -> c.getName().matches("(.*)dept(.*)"))
+      userDetailDto.setDept(conversations.getChannels().stream().filter(c -> c.getName().matches("(.*)dept(.*)" +
+        "|(.*)flutter(.*)|(.*)android(.*)"))
         .collect(Collectors.toList()));
       List<SlackChannelDto> userTeam = conversations.getChannels().stream().filter(c -> c.getName().matches("(.*)team(.*)"))
         .collect(Collectors.toList());
-      userDetailDto.setTeamMembers(getChannelDetailService.getMemberOfChannel(userTeam.get(0).getId()));
-      userDetailDto.getTeamMembers().removeIf(t -> t.getId().equals(userId));
+      if(userTeam.size()!=0) {
+        userDetailDto.setTeamMembers(getChannelDetailService.getMemberOfChannel(userTeam.get(0).getId()));
+        userDetailDto.getTeamMembers().removeIf(t -> t.getId().equals(userId));
+      }
       return userDetailDto;
     }
     return userProfileInfo;

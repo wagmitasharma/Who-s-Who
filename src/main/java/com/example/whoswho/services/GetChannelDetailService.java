@@ -41,9 +41,11 @@ public class GetChannelDetailService {
     List<ChannelDto> channelDtoList = getListOfChannels();
     List<ChannelDto> teamChannelList = channelDtoList.stream().filter(c -> c.getName().matches("(.*)team(.*)"))
       .collect(Collectors.toList());
-    List<ChannelDto> deptChannelList = channelDtoList.stream().filter(c -> c.getName().matches("(.*)dept(.*)"))
+    List<ChannelDto> deptChannelList = channelDtoList.stream().filter(c -> c.getName().matches("(.*)dept(.*)" +
+      "|(.*)flutter(.*)|(.*)android(.*)"))
       .collect(Collectors.toList());
-    List<ChannelDto> projectChannelList = channelDtoList.stream().filter(c -> c.getName().matches("(.*)project(.*)"))
+    List<ChannelDto> projectChannelList = channelDtoList.stream().filter(c -> c.getName().matches("(.*)project(.*)" +
+      "|(.*)rakbank(.*)|(.*)falcon(.*)"))
       .collect(Collectors.toList());
 
     CompletableFuture<List> teams = getTeamUsers(teamChannelList);
