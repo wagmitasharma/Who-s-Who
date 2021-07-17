@@ -24,6 +24,8 @@ public class UserProfileInfo {
 
   @JsonProperty("image")
   private String image;
+  @JsonProperty("imageHd")
+  private String imageHd;
 
   public String getName() {
     return name;
@@ -52,4 +54,12 @@ public class UserProfileInfo {
   public String getImage() { return image; }
 
   public void setImage(String image) { this.image = image; }
+
+  public String getImageHd() {
+    return imageHd;
+  }
+
+  public void setImageHd(String imageHd) {
+    this.imageHd = imageHd;
+  }
 }
